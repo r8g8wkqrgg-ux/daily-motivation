@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>每日鸡汤</title>
+    <meta charset="utf-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        #date-display {
+            color: #666;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+        
+        .quote-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 30px 0;
+            border-left: 5px solid #2575fc;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #quote {
+            font-size: 1.8rem;
+            line-height: 1.6;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .quote-icon {
+            position: absolute;
+            color: #2575fc;
+            opacity: 0.2;
+            font-size: 3rem;
+        }
+        
+        .quote-icon.left {
+            top: 20px;
+            left: 20px;
+        }
+        
+        .quote-icon.right {
+            bottom: 20px;
+            right: 20px;
+            transform: rotate(180deg);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .stats {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .history-item {
+            background: #f8f9fa;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            border-left: 3px solid #6a11cb;
+        }
+        
+        .history-date {
+            color: #2575fc;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            #quote {
+                font-size: 1.4rem;
+            }
+            
+            .quote-box {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📖 每日鸡汤</h1>
+        <div id="date-display">今天是 <span id="current-date"></span></div>
+        
+        <div class="quote-box">
+            <div class="quote-icon left">"</div>
+            <div id="quote">点击下方按钮获取今日鸡汤</div>
+            <div class="quote-icon right">"</div>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="getDailyQuote()">✨ 获取今日鸡汤</button>
+            <button onclick="showHistory()">📜 查看历史记录</button>
+            <button onclick="addNewQuote()">➕ 添加新句子</button>
+        </div>
+        
+        <div id="history-container" class="hidden">
+            <h3>历史记录（最近20条）</h3>
+            <div id="history-list"></div>
+            <button onclick="hideHistory()" style="background: #666; margin-top: 15px;">返回</button>
+        </div>
+        
+        <div id="add-quote-container" class="hidden">
+            <h3>添加新句子</h3>
+            <textarea id="new-quote" rows="4" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd;"></textarea>
+            <div>
+                <button onclick="saveNewQuote()">保存</button>
+                <button onclick="hideAddForm()" style="background: #666;">取消</button>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <p>总句子数: <span id="total-count">0</span> | 
+               今日可用句子: <span id="available-count">0</span> |
+               已显示次数: <span id="shown-count">0</span> |
+               不重复周期: <span style="color:#2575fc;">20天</span>
+            </p >
+        </div>
+    </div>
+    
+    <script>
+        // 这里是你的鸡汤句子库 - 直接在这里添加你的句子
+        let quotes = [
+            "《约书亚记》1章9节：我岂没有吩咐你吗？你当刚强壮胆！不要惧怕，也不要惊慌；因为你无论往哪里去，耶和华-你的神必与你同在",
+            "如果你现在当机立断，两三年后自有变化；如果你继续犹豫不决，纠缠不舍你会损失七八年甚至更久",
+            "他一辈子就是在犹豫，等到没办法了，胡乱选择一下",	
+            "他听到了一些自己不同意的观点，立即进入了反驳模式，而在反驳模式中，倾听已不复存在。当倾听停止时，思考也就停止了。",
+            "停止向世界描绘你的监狱；更重要的是：停止向自己描述；更重要的是：现在站起身，走出监狱；因为监狱没有上锁；也没有门；最后：根本没有监狱",
+            "截至2024年6月30日，我们的所有其他借款均已偿清。",
+            "只有真的改变，才能真的改变",
+            "Everything is weird, isn't it ?!",
+            "别久坐，别抽烟，别吃太多糖油混合物，别喝酒，别熬夜。",
+            "与内在动机相关的奖赏是当一个人自由的从事目标活动时，自发产生的愉悦感和成就感，因此感觉胜任这项工作是人们内在满足感的一个重要方面，这种感到自己效率颇高的感觉，本身就是一种满足，甚至可以成为你终身事业的主要动力。",
+            "你现在碰到的每一个困境，基本都是针对你性格的弱点而量身定制的，所以命运会反复出题，直到你给出新的答案为止。",
+            "时间自由的核心，不是拼命节省时间而是通过明确目标、精简琐事（包括无效社交），主动掌控时间分配。",
+            "First, you start. Then, you continue. Finally, you finish.",
+            "身在何处很重要吗？如果始终在自己所在的地方竭尽全力，一切就能回到正轨。",
+            "我不需要，我不纠结，我可以放弃，没什么重要的，不需要那么在意，前途一片光明。",
+            "So, what do you feel? And then, what are you going to do?",
+            "有人曾经说过，我们活在这个世上，做错的事要比做对的事多得多。所以我们的人生永远都是盈利的，是洋溢着祝福的，所以不要等过去了再后悔，要感谢活着的瞬间",
+            "朱萌馨，打起精神过日子吧。不管你是不是看清了这世界，世界是不会放过你的，哪怕你不断地坠落着，哪怕你感到冤屈要死，也不会懂你的内心，你现在是站在了悬崖边上，不小心的话，就会从悬崖里掉下来，毫无痕迹地消失掉",
+            "在摄影机后面拍人有趣吗？这个啊？有趣啊。其实观察别人的人生就是最有趣的事。当你阅人无数，遇过各式各样的人，有时候就会感谢自己有个平凡的人生。怎么了吗？真的有可能感谢自己平凡的人生吗？",
+            "折磨我们的往往是想象，而不是真实",
+            "其实每时每刻我们都是幸运的，因为任何灾难的前面都可能再加一个“更”字", 
+            "由于我的无知，我对生存方式只有一个非常普通的信条：不许后悔",
+            "人生有很多时刻都不适合展开来讲，因为你要的不是有个人听你过去的故事，而是懂你此刻的心情，沉默吧，如果那个时候有人能握着你的手的话",
+            "闭上眼睛，想象一下，2067年，你已经七老八十了，坐在空无一人的房间里，臃肿老态，生活不能自理，你对上帝许下了一个愿望：“求求你啊上帝，让我再年轻一次吧！”老天爷应允。于是嗖的一声，你回到了现在，睁开眼睛，看看你的手机，现在是几点几分。你有了年轻的一次。可是你这次你此刻打算怎么活？",
+            "情商别太高，有时候智商接不住，有时候命运接不住"
+            // 在这里继续添加更多句子...
+            // 格式： "你的句子",
+        ];
+        
+        // 不重复周期（改为20天）
+        const NO_REPEAT_DAYS = 20;
+        
+        // 显示当前日期
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'
+        });
+        
+        // 初始化 - 从本地存储加载数据
+        let history = JSON.parse(localStorage.getItem('quoteHistory') || '{}');
+        let usedQuotes = JSON.parse(localStorage.getItem('usedQuotes') || '[]');
+        let allHistory = JSON.parse(localStorage.getItem('allHistory') || '[]');
+        
+        updateStats();
+        
+        // 核心功能：获取每日鸡汤
+        function getDailyQuote() {
+            const today = new Date().toISOString().split('T')[0]; // 格式：2024-01-01
+            
+            // 检查今天是否已经获取过
+            if (history[today]) {
+                document.getElementById('quote').innerHTML = history[today];
+                showMessage('今天已经获取过鸡汤啦！');
+                return;
+            }
+            
+            // 获取20天内未显示的句子
+            const availableQuotes = getAvailableQuotes();
+            
+            if (availableQuotes.length === 0) {
+                // 如果所有句子都在20天内显示过，重置
+                resetUsedQuotes();
+                getDailyQuote(); // 重新调用
+                return;
+            }
+            
+            // 随机选择一句
+            const randomIndex = Math.floor(Math.random() * availableQuotes.length);
+            const selectedQuote = availableQuotes[randomIndex];
+            
+            // 记录使用
+            recordQuoteUsage(selectedQuote, today);
+            
+            // 显示结果
+            document.getElementById('quote').innerHTML = selectedQuote;
+            showMessage('今日鸡汤已送达！');
+            updateStats();
+        }
+        
+        // 获取可用的句子（20天内未显示）
+        function getAvailableQuotes() {
+            const now = new Date();
+            const twentyDaysAgo = new Date(now.getTime() - NO_REPEAT_DAYS * 24 * 60 * 60 * 1000);
+            
+            return quotes.filter(quote => {
+                const lastUsed = usedQuotes.find(item => item.quote === quote);
+                if (!lastUsed) return true;
+                
+                const lastDate = new Date(lastUsed.date);
+                return lastDate < twentyDaysAgo;
+            });
+        }
+        
+        // 记录句子使用情况
+        function recordQuoteUsage(quote, date) {
+            // 更新历史记录
+            history[date] = quote;
+            localStorage.setItem('quoteHistory', JSON.stringify(history));
+            
+            // 更新使用记录
+            const existingIndex = usedQuotes.findIndex(item => item.quote === quote);
+            if (existingIndex !== -1) {
+                usedQuotes[existingIndex].date = date;
+            } else {
+                usedQuotes.push({ quote: quote, date: date });
+            }
+            localStorage.setItem('usedQuotes', JSON.stringify(usedQuotes));
+            
+            // 添加到完整历史
+            allHistory.unshift({ date: date, quote: quote });
+            if (allHistory.length > 100) allHistory = allHistory.slice(0, 100);
+            localStorage.setItem('allHistory', JSON.stringify(allHistory));
+        }
+        
+        // 重置使用记录（当所有句子都在20天内显示过时）
+        function resetUsedQuotes() {
+            usedQuotes = [];
+            localStorage.setItem('usedQuotes', JSON.stringify(usedQuotes));
+            showMessage(`所有句子都在${NO_REPEAT_DAYS}天内显示过，已重置循环！`);
+        }
+        
+        // 显示历史记录
+        function showHistory() {
+            document.getElementById('history-container').classList.remove('hidden');
+            document.querySelector('.button-group').classList.add('hidden');
+            document.getElementById('add-quote-container').classList.add('hidden');
+            
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            
+            // 显示最近20条记录
+            const recentHistory = allHistory.slice(0, 20);
+            
+            if (recentHistory.length === 0) {
+                historyList.innerHTML = '<p style="color: #666; text-align: center;">还没有历史记录</p >';
+                return;
+            }
+            
+            recentHistory.forEach(item => {
+                const date = new Date(item.date);
+                const formattedDate = date.toLocaleDateString('zh-CN', {
+                    month: 'short',
+                    day: 'numeric',
+                    weekday: 'short'
+                });
+                
+                // 计算距今多少天
+                const today = new Date();
+                const diffTime = today - date;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                const daysAgoText = diffDays === 0 ? "今天" : `${diffDays}天前`;
+                
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div class="history-date">${formattedDate}（${daysAgoText}）</div>
+                    <div>${item.quote}</div>
+                `;
+                historyList.appendChild(div);
+            });
+        }
+        
+        function hideHistory() {
+            document.getElementById('history-container').classList.add('hidden');
+            document.querySelector('.button-group').classList.remove('hidden');
+        }
+        
+        // 添加新句子
+        function addNewQuote() {
+            document.getElementById('add-quote-container').classList.remove('hidden');
+            document.querySelector('.button-group').classList.add('hidden');
+            document.getElementById('history-container').classList.add('hidden');
+            document.getElementById('new-quote').focus();
+        }
+        
+        function hideAddForm() {
+            document.getElementById('add-quote-container').classList.add('hidden');
+            document.querySelector('.button-group').classList.remove('hidden');
+            document.getElementById('new-quote').value = '';
+        }
+        
+        function saveNewQuote() {
+            const newQuote = document.getElementById('new-quote').value.trim();
+            
+            if (!newQuote) {
+                showMessage('请输入内容');
+                return;
+            }
+            
+            if (quotes.includes(newQuote)) {
+                showMessage('这句话已经存在了');
+                return;
+            }
+            
+            quotes.push(newQuote);
+            // 保存到本地存储
+            localStorage.setItem('quotes', JSON.stringify(quotes));
+            
+            showMessage('添加成功！');
+            hideAddForm();
+            updateStats();
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('total-count').textContent = quotes.length;
+            document.getElementById('available-count').textContent = getAvailableQuotes().length;
+            document.getElementById('shown-count').textContent = usedQuotes.length;
+        }
+        
+        // 显示提示信息
+        function showMessage(msg) {
+            const oldMsg = document.getElementById('quote').textContent;
+            document.getElementById('quote').innerHTML = `<span style="color: #2575fc;">${msg}</span><br><br><small>${oldMsg}</small>`;
+            
+            setTimeout(() => {
+                if (!msg.includes('已经获取过')) {
+                    document.getElementById('quote').innerHTML = oldMsg;
+                }
+            }, 2000);
+        }
+        
+        // 页面加载时尝试加载保存的句子
+        window.addEventListener('load', function() {
+            const savedQuotes = localStorage.getItem('quotes');
+            if (savedQuotes) {
+                quotes = JSON.parse(savedQuotes);
+            }
+            updateStats();
+        });
+    </script>
+</body>
+</html>
